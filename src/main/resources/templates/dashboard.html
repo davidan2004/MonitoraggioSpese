@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Monitoraggio Spese</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/scripts.js"></script>
+</head>
+<body class="background-image" th:attr="data-user-id=${user.id}, data-from-page='/'">
+  <header>
+	<div class="left-header">
+	  <span th:text="'Benvenuto, ' + ${user.name}"></span>
+	</div>
+	
+    <div class="right-header" th:if="${userDetails}">
+      <span th:text="${userDetails.username}"></span>
+      <a href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+	<div th:if="${change}" class="notification success" id="notification">
+	  <span th:text="${change}"></span>
+	</div>
+    <h1>Dashboard</h1>
+
+    <div class="dashboard-layout">
+      <!-- Central Chart Circle -->
+      <div class="central-chart">
+        <div class="chart-wrapper">
+          <canvas id="transactionsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Metodi di Pagamento -->
+      <section class="card payment-methods">
+        <h2>💳 Metodi di Pagamento</h2>
+        <ul>
+          <li th:each="method : ${paymentMethods}">
+			<div style="display: flex; justify-content: space-between; align-items: center;">
+			  <span th:text="${method.name}"></span>
+			  <span th:text="${method.type.getName().substring(method.type.getName().length() - 2)}"></span>
+			</div>
+		  </li>
+        </ul>
+		<div class="empty" th:if="${#lists.isEmpty(paymentMethods)}">Non sono presenti metodi di pagamento</div>
+		<div class="btn-group">
+          <a class="btn" href="#" onclick="openAddMethodModal()">➕ Aggiungi</a>
+          <a class="btn btn-secondary" th:href="@{'/methods/manage/' + ${user.id}}">⚙️ Gestisci</a>
+        </div>
+      </section>
+
+      <!-- Transazioni Recenti -->
+      <section class="card recent-transactions">
+        <h2>🕒 Transazioni Recenti</h2>
+        <ul>
+          <li th:each="transaction : ${recentTransactions}" th:text="${transaction.description} + ' - ' + ${transaction.amount} + ' €' + ' (' + ${transaction.date} + ')'"></li>
+        </ul>
+		<div class="empty" th:if="${#lists.isEmpty(recentTransactions)}">Non sono presenti transazioni recenti</div>
+		<div class="btn-group">
+			<a class="btn" href="#" onclick="openAddTransactionModal()">➕ Aggiungi</a>
+			<a class="btn btn-secondary" th:href="'/transactions/manage/' + ${user.id}">📋 Vedi tutte</a>
+		</div>
+      </section>
+
+      <!-- Report -->
+      <section class="card reports">
+        <h2>📈 Report</h2>
+        <ul>
+          <li th:each="report : ${reports}" th:text="${report.name} + ' | ' + ${report.date}"></li>
+        </ul>
+		<div class="empty" th:if="${#lists.isEmpty(reports)}">Non sono presenti report</div>
+		<a class="btn btn-secondary" onclick="openGenerateReportModal()">📈 Genera Report</a>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal-->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+  
+  <script>
+	// Chart.js setup
+	const ctx = document.getElementById("transactionsChart").getContext("2d");
+	const chart = new Chart(ctx, {
+	  type: "line",
+	  data: {
+	    labels: ["Gen", "Feb", "Mar", "Apr", "Mag"],
+	    datasets: [
+	      {
+	        label: "Spese mensili (€)",
+	        data: [450, 520, 380, 670, 590],
+	        backgroundColor: "rgba(56, 161, 105, 0.1)",
+	        borderColor: "#38a169",
+	        borderWidth: 3,
+	        pointBackgroundColor: "#38a169",
+	        pointBorderColor: "#ffffff",
+	        pointBorderWidth: 2,
+	        pointRadius: 6,
+	        pointHoverRadius: 8,
+	        fill: true,
+	        tension: 0.4,
+	      },
+	    ],
+	  },
+	  options: {
+	    responsive: true,
+	    maintainAspectRatio: false,
+	    plugins: {
+	      legend: {
+	        labels: {
+	          color: "#276749",
+	          font: { weight: "600", size: 14 }
+	        }
+	      },
+	      tooltip: {
+	        backgroundColor: "rgba(56, 161, 105, 0.9)",
+	        titleColor: "#ffffff",
+	        bodyColor: "#ffffff",
+	        cornerRadius: 8,
+	        displayColors: false,
+	      },
+	    },
+	    scales: {
+	      y: {
+	        beginAtZero: true,
+	        grid: {
+	          color: "rgba(56, 161, 105, 0.1)",
+	          drawBorder: false,
+	        },
+	        ticks: {
+	          color: "#276749",
+	          font: { weight: "500" },
+	          callback: function(value) {
+	            return value + "€";
+	          }
+	        },
+	      },
+	      x: {
+	        grid: {
+	          display: false,
+	        },
+	        ticks: {
+	          color: "#276749",
+	          font: { weight: "500" }
+	        },
+	      },
+	    },
+	    interaction: {
+	      intersect: false,
+	      mode: 'index',
+	    },
+	    animation: {
+	      duration: 1000,
+	      easing: 'easeOutQuart'
+	    }
+	  },
+	});
+  </script>
+</body>
+2004-2025 © Davidor, Incorporated. All rights reserved.
+</html>

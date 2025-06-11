@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestione Transazioni - Monitoraggio Spese</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/js/scripts.js"></script>
+</head>
+<body th:attr="data-user-id=${user.id}, data-from-page='/transactions/manage/' + ${user.id}">
+  <header>
+    <div class="left-header">
+      <span th:text="'Benvenuto, ' + ${user.name}"></span>
+    </div>
+
+    <div class="right-header" th:if="${userDetails}">
+      <span th:text="${userDetails.username}"></span>
+      <a href="/logout">Logout</a>
+    </div>
+  </header>
+
+  <div th:if="${change}" class="notification success" id="notification">
+    <span th:text="${change}"></span>
+  </div>
+
+  <div class="dashboard-container">
+    <h1>Gestione Transazioni</h1>
+
+    <!-- Grafico transazioni recenti -->
+    <div class="card">
+      <h2>📊 Ultime 10 Transazioni</h2>
+      <div class="chart-wrapper" style="height: 300px;">
+        <canvas id="recentTransactionsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Lista transazioni -->
+    <div class="card" style="margin-top: 5%;">
+      <h2>📋 Le Tue Transazioni</h2>
+      <div class="empty" th:if="${transactions.isEmpty()}">Non sono presenti transazioni</div>
+
+      <ul>
+        <li class="method-item" th:each="transaction : ${transactions}">
+          <div class="method-info">
+            <span th:text="${transaction.description} + ' | ' + ${transaction.amount} + '€' + ' | ' + ${transaction.category.getLabel()}
+			+ ' (' + ${transaction.type.getName()} + ')' "></span>
+            <span class="transactions-count" th:text="${transaction.date}"></span>
+          </div>
+          <div class="method-actions">
+            <form th:action="@{/transactions/delete/{userId}/{transactionId}(userId=${user.id}, transactionId=${transaction.id})}" method="POST">
+              <button class="btn" type="submit">❌ Rimuovi</button>
+            </form>
+          </div>
+        </li>
+      </ul>
+
+      <div class="btn-group">
+        <a class="btn" href="#" onclick="openAddTransactionModal()">➕ Aggiungi Transazione</a>
+      </div>
+    </div>
+
+    <div class="center-btn">
+      <a href="/" class="btn">🔙 Torna alla Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Modal-->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+	// Setup del grafico con Thymeleaf
+	const ctx = document.getElementById("recentTransactionsChart").getContext("2d");
+
+	// Dati ricevuti dal backend
+	const amounts = /*[[${transactionsAmounts}]]*/ [];
+	const types = /*[[${transactionsTypes}]]*/ [];
+	const dates = /*[[${transactionsDates}]]*/ [];
+	const descriptions = /*[[${transactionsDescriptions}]]*/ [];
+
+	// Processa i dati per rendere negative le spese
+	const processedAmounts = amounts.map((amount, index) => {
+	  const type = types[index];
+	  return type === 'EXPENSE' ? -Math.abs(amount) : Math.abs(amount);
+	});
+
+	// Etichette asse X con descrizione e data
+	const labels = descriptions.map((desc, index) => {
+	  const date = new Date(dates[index]).toLocaleDateString('it-IT');
+	  return `${desc} (${date})`;
+	});
+
+	// Colori dinamici solo per le barre
+	const backgroundColors = processedAmounts.map(amount => 
+	  amount >= 0 ? "rgba(56, 161, 105, 0.8)" : "rgba(245, 101, 101, 0.8)"
+	);
+
+	const borderColors = processedAmounts.map(amount => 
+	  amount >= 0 ? "#38a169" : "#f56565"
+	);
+
+	const chart = new Chart(ctx, {
+	  type: "bar",
+	  data: {
+	    labels: labels,
+	    datasets: [{
+	      label: "Importo (€)", // Label semplice, senza colore associato
+	      data: processedAmounts,
+	      backgroundColor: backgroundColors,
+	      borderColor: borderColors,
+	      borderWidth: 2,
+	      borderRadius: 8,
+	      borderSkipped: false
+	    }]
+	  },
+	  options: {
+	    responsive: true,
+	    maintainAspectRatio: false,
+	    plugins: {
+	      legend: {
+	        labels: {
+	          color: "#276749", // Colore fisso per la legenda
+	          font: { weight: "600", size: 14 }
+	        }
+	      },
+	      tooltip: {
+	        backgroundColor: "rgba(56, 161, 105, 0.9)",
+	        titleColor: "#ffffff",
+	        bodyColor: "#ffffff",
+	        cornerRadius: 8,
+	        displayColors: false,
+	        callbacks: {
+	          title: function(context) {
+	            const index = context[0].dataIndex;
+	            const name = descriptions[index];
+	            const date = new Date(dates[index]).toLocaleDateString('it-IT');
+	            return `${name} (${date})`;
+	          },
+	          label: function(context) {
+	            const index = context.dataIndex;
+	            const amount = Math.abs(context.raw);
+	            const type = types[index] === 'EXPENSE' ? 'Spesa' : 'Entrata';
+	            return `${type}: €${amount.toFixed(2)}`;
+	          }
+	        }
+	      }
+	    },
+	    scales: {
+	      y: {
+	        beginAtZero: true,
+	        ticks: {
+	          color: "#276749",
+	          callback: function(value) {
+	            return (value >= 0 ? '+' : '') + value.toFixed(2) + "€";
+	          }
+	        },
+	        grid: {
+	          color: function(context) {
+	            return context.tick.value === 0
+	              ? "rgba(56, 161, 105, 0.5)"
+	              : "rgba(56, 161, 105, 0.1)";
+	          },
+	          drawBorder: false,
+	          lineWidth: function(context) {
+	            return context.tick.value === 0 ? 2 : 1;
+	          }
+	        }
+	      },
+	      x: {
+	        ticks: {
+	          color: "#276749",
+	          maxRotation: 45,
+	          minRotation: 0,
+	          callback: function(value, index) {
+	            return descriptions[index]; // Solo descrizione come etichetta
+	          }
+	        },
+	        grid: {
+	          display: false
+	        }
+	      }
+	    },
+	    interaction: {
+	      intersect: false,
+	      mode: 'index'
+	    }
+	  }
+	});
+  </script>
+</body>
+</html>

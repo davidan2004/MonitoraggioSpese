@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Gestione Metodi di Pagamento - Monitoraggio Spese</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <script src="/js/scripts.js"></script>
+</head>
+<body th:attr="data-user-id=${user.id}, data-from-page='/methods/manage/' + ${user.id}">
+	<header>
+		<div class="left-header">
+		  <span th:text="'Benvenuto, ' + ${user.name}"></span>
+		</div>
+
+		<div class="right-header" th:if="${userDetails}">
+		  <span th:text="${userDetails.username}"></span>
+		  <a href="/logout">Logout</a>
+		</div>
+	</header>
+		
+	<div th:if="${change}" class="notification success" id="notification">
+	  <span th:text="${change}"></span>
+	</div>
+
+	<div class="dashboard-container">
+	  <h1>Gestione Metodi di Pagamento</h1>
+
+	  <div class="card payment-methods">
+		<div class="empty" th:if="${paymentMethods.isEmpty()}">Non sono presenti metodi di pagamento</div>
+
+		<ul>
+		  <li class="method-item" th:each="method : ${paymentMethods}">
+			<div class="method-emoji" th:text="${method.type.getName().substring(method.type.getName().length() - 2)}"></div>
+			<div class="method-info">
+			  <span th:text="${method.name} + ' (' + ${method.type.getName().substring(0, method.type.getName().length()-2)} + ')'"></span>
+			  <span class="transactions-count" th:text="'Transazioni: ' + ${method.transactions.size()}"></span>
+			 
+		  </div>
+			<div class="method-actions">
+			  <form th:action="@{/methods/delete/{userId}/{methodId}(userId=${user.id}, methodId=${method.id})}" method="POST"
+			  th:attr="data-transactions-count=${method.transactions.size()}, data-method-name=${method.name}">
+				<button class="btn" type="button" onclick="confirmDeleteMethod(this)">❌ Rimuovi</button>
+			  </form>
+			</div>
+		  </li>
+		</ul>
+
+		<div class="btn-group">
+		  <a class="btn" href="#" onclick="openAddMethodModal()">➕ Aggiungi Metodo</a>
+		</div>
+	  </div>
+
+	  <div class="center-btn">
+		<a href="/" class="btn">🔙 Torna indietro</a>
+	  </div>
+	</div>	
+
+	<!-- Modal aggiungi metodo di pagamento o conferma eliminazione metodo -->
+	<div id="modal" class="modal">
+	  <div class="modal-content">
+		<span class="close" onclick="closeModal()">&times;</span>
+		<div id="modalBody"></div>
+	  </div>
+	</div>
+</body>
+</html>
