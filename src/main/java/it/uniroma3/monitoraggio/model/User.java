@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
@@ -31,9 +32,12 @@ public class User {
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	private List<PaymentMethod> paymentMethods;
 	
-	@OneToMany(cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@OrderBy("date DESC")
 	private List<Transaction> transactions;
+	
+	@OneToOne(cascade = CascadeType.ALL)
+	private Report report;
 	
 	public Long getId() {
 		return id;
@@ -79,6 +83,14 @@ public class User {
 		return transactions.subList(Math.max(0, transactions.size()-10), transactions.size());
 	}
 	
+	public Report getReport() {
+		return report;
+	}
+
+	public void setReport(Report report) {
+		this.report = report;
+	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(name, surname);

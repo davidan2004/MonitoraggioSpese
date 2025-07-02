@@ -1,52 +1,43 @@
 <div th:fragment="addReportForm">
   <script src="/js/scripts.js"></script>
   <h2>Crea Report</h2>
-  <div id="modalBody">
-    <form id="reportForm" th:action="@{'/reports/add/' + ${userId} + '?fromPage=' + ${fromPage}}" method="POST">
 
-		<div class="form-group" id="categorySelection">
-		  <label><strong>Categorie</strong></label>
+  <form id="reportForm" th:attr="data-report-exists=${reportExists}"
+        th:action="@{'/reports/add/' + ${userId} + '?fromPage=' + ${fromPage}}"
+        method="POST">
 
-		  <!-- Checkbox "Seleziona tutte" -->
-		  <div class="custom-checkbox">
-		    <input type="checkbox" id="selectAllCategories" onchange="toggleAllCategories(this)">
-		    <label for="selectAllCategories">Seleziona tutte le categorie</label>
-		  </div>
+    <div class="form-group">
+      <label for="type"><strong>Tipo</strong></label>
+      <select id="type" th:field="${report.type}" class="form-control">
+        <option value="" selected>-- Incassi & Spese --</option>
+        <option th:each="type : ${transactionTypes}"
+                th:value="${type}"
+                th:text="${type.name}">
+        </option>
+      </select>
+    </div>
 
-		  <!-- Categorie di spesa -->
-		  <div>
-		    <strong>Spese</strong>
-		    <div th:each="cat : ${expenseCategories}" class="custom-checkbox">
-		      <input type="checkbox" class="category-checkbox" name="categories" th:value="${cat}" th:id="${'cat_' + cat.ordinal()}">
-		      <label th:for="${'cat_' + cat.ordinal()}" th:text="${cat.label}"></label>
-		    </div>
-		  </div>
+    <div class="form-group">
+      <label for="start">Data di Inizio</label>
+      <input type="date" id="start" th:field="${report.start}" required>
+    </div>
 
-		  <!-- Categorie di guadagno -->
-		  <div>
-		    <strong>Guadagni</strong>
-		    <div th:each="cat : ${profitCategories}" class="custom-checkbox">
-		      <input type="checkbox" class="category-checkbox" name="categories" th:value="${cat}" th:id="${'cat_' + cat.ordinal()}">
-		      <label th:for="${'cat_' + cat.ordinal()}" th:text="${cat.label}"></label>
-		    </div>
-		  </div>
-		</div>
+    <div class="form-group">
+      <label for="end">Data di Fine</label>
+      <input type="date" id="end" th:field="${report.end}" required>
+    </div>
 
+    <div class="actions">
+      <button type="button" class="btn" onclick="confirmReport(this)">Genera Report</button>
+      <button type="button" class="btn btn-secondary" onclick="closeModal()">Annulla</button>
+    </div>
 
-      <div class="form-group">
-        <label for="start">Data di Inizio</label>
-        <input type="date" id="start" name="start" th:field="${report.start}" required>
-      </div>
-
-      <div class="form-group">
-        <label for="end">Data di Fine</label>
-        <input type="date" id="end" name="end" th:field="${report.end}" required>
-      </div>
-
-      <div class="actions">
-        <button type="submit" class="btn">Genera Report</button>
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annulla</button>
-      </div>
-    </form>
+  </form>
+</div>
+<div id="confirmModal" class="modal" style="display: none">
+  <div class="modal-content" id="confirmModalBody">
+    <!-- Modale di conferma-->
   </div>
 </div>
+
+

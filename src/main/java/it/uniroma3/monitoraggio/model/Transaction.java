@@ -1,7 +1,10 @@
 package it.uniroma3.monitoraggio.model;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Objects;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
@@ -22,10 +26,12 @@ public class Transaction {
 	private Long id;
 	
 	@NotNull
+	@Min(1)
 	private int amount;
 	
 	@NotNull
 	@PastOrPresent
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate date;
 	
 	@NotBlank
@@ -40,6 +46,28 @@ public class Transaction {
 	
 	@ManyToOne
 	private PaymentMethod paymentMethod;
+	
+	@ManyToOne
+	private User user;
+	
+	public static int getTotalAmount(List<Transaction> transactions, TransactionType filterType) {
+		int amount = 0;
+		
+		if(filterType == null) { 
+			for(Transaction t : transactions)
+				amount += t.getAmount();
+		}
+		else if(filterType == TransactionType.EXPENSE) {
+			for(Transaction t : transactions)
+				if(t.getType() == TransactionType.EXPENSE)
+					amount += t.getAmount();
+		} else
+			for(Transaction t : transactions)
+				if(t.getType() == TransactionType.PROFIT)
+					amount += t.getAmount();
+		
+		return amount;
+	}
 
 
 	public Long getId() {
@@ -105,6 +133,16 @@ public class Transaction {
 
 	public void setType(TransactionType type) {
 		this.type = type;
+	}
+
+
+	public User getUser() {
+		return user;
+	}
+
+
+	public void setUser(User user) {
+		this.user = user;
 	}
 
 

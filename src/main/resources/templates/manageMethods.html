@@ -8,13 +8,20 @@
 </head>
 <body th:attr="data-user-id=${user.id}, data-from-page='/methods/manage/' + ${user.id}">
 	<header>
-		<div class="left-header">
-		  <span th:text="'Benvenuto, ' + ${user.name}"></span>
+		<div class="header-left">
+		  <span class="welcome" th:text="'Benvenuto, ' + ${user.name}"></span>
+		</div>
+		
+		<div class="header-center">
+			<h1>Gestione Metodi di Pagamento</h1>
 		</div>
 
-		<div class="right-header" th:if="${userDetails}">
-		  <span th:text="${userDetails.username}"></span>
-		  <a href="/logout">Logout</a>
+		<div class="header-right" th:if="${userDetails}">
+		  <div class="user-info">
+		    <div class="user-avatar" th:text="${userDetails.username.substring(0,1).toUpperCase()}"></div>
+		    <span th:text="${userDetails.username}"></span>
+		  </div>
+		  <a href="/logout" class="logout">Logout</a>
 		</div>
 	</header>
 		
@@ -23,7 +30,6 @@
 	</div>
 
 	<div class="dashboard-container">
-	  <h1>Gestione Metodi di Pagamento</h1>
 
 	  <div class="card payment-methods">
 		<div class="empty" th:if="${paymentMethods.isEmpty()}">Non sono presenti metodi di pagamento</div>
@@ -46,7 +52,7 @@
 		</ul>
 
 		<div class="btn-group">
-		  <a class="btn" href="#" onclick="openAddMethodModal()">➕ Aggiungi Metodo</a>
+		  <a class="btn" href="#" th:onclick="openAddMethodModal()">➕ Aggiungi Metodo</a>
 		</div>
 	  </div>
 

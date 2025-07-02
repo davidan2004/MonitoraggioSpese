@@ -3,6 +3,7 @@ package it.uniroma3.monitoraggio.model;
 import java.time.LocalDate;
 import java.util.Objects;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,20 +19,21 @@ public class Report {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
-	@NotNull
+	private int transactionsAmount;
+	
 	private int expenseAmount;
 	
-	@NotNull
 	private int earnedAmount;
 	
-	@NotNull
-	private TransactionCategory category;
+	private TransactionType type;
 	
 	@Past
+	@Column(name = "start_date")
 	private LocalDate start;
 	
 	@NotNull
 	@PastOrPresent
+	@Column(name = "end_date")
 	private LocalDate end;
 
 	
@@ -59,12 +61,12 @@ public class Report {
 		this.earnedAmount = earnedAmount;
 	}
 
-	public TransactionCategory getCategory() {
-		return category;
+	public TransactionType getType() {
+		return type;
 	}
 
-	public void setCategory(TransactionCategory category) {
-		this.category = category;
+	public void setType(TransactionType type) {
+		this.type = type;
 	}
 
 	public LocalDate getStart() {
@@ -82,10 +84,19 @@ public class Report {
 	public void setEnd(LocalDate end) {
 		this.end = end;
 	}
+	
+
+	public int getTransactionsAmount() {
+		return transactionsAmount;
+	}
+	
+	public void setTransactionsAmount(int transactionsAmount) {
+		this.transactionsAmount = transactionsAmount;
+	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(category, end, start);
+		return Objects.hash(type, end, start);
 	}
 
 	@Override
@@ -97,7 +108,6 @@ public class Report {
 		if (getClass() != obj.getClass())
 			return false;
 		Report other = (Report) obj;
-		return category == other.category && Objects.equals(end, other.end) && Objects.equals(start, other.start);
+		return type == other.type && Objects.equals(end, other.end) && Objects.equals(start, other.start);
 	}
-
 }

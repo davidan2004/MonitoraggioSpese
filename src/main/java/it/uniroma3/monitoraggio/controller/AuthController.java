@@ -1,5 +1,8 @@
 package it.uniroma3.monitoraggio.controller;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -13,8 +16,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import it.uniroma3.monitoraggio.model.Credentials;
+import it.uniroma3.monitoraggio.model.Transaction;
+import it.uniroma3.monitoraggio.model.TransactionType;
 import it.uniroma3.monitoraggio.model.User;
 import it.uniroma3.monitoraggio.service.CredentialsService;
+import it.uniroma3.monitoraggio.service.TransactionService;
 import it.uniroma3.monitoraggio.service.UserService;
 import jakarta.validation.Valid;
 
@@ -23,6 +29,9 @@ public class AuthController {
 
 	@Autowired
 	private CredentialsService credentialsService;
+	
+	@Autowired
+	private TransactionService transactionService;
 	
 	@Autowired
 	private UserService userService;
@@ -41,7 +50,7 @@ public class AuthController {
 	}
 	
 	@GetMapping("/")
-	public String root(Model model) {
+	public String root(Model model, @ModelAttribute("modalToShow") String modalName) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 		if(authentication instanceof AnonymousAuthenticationToken)
 			return "root.html";
@@ -55,7 +64,17 @@ public class AuthController {
 		model.addAttribute("user", currentUser);
 		model.addAttribute("paymentMethods", currentUser.getPaymentMethods());
 		model.addAttribute("recentTransactions", currentUser.getLast10Transactions());
+		model.addAttribute("report", currentUser.getReport());
+		model.addAttribute("modalToShow", modalName);	
 		
+		/* Per chart */
+		List<Transaction> transactions = transactionService.findBetweenDates(currentUser, LocalDate.of(2000, 1, 1), LocalDate.now());
+				
+		
+		
+		model.addAttribute("expenseAmount", Transaction.getTotalAmount(transactions, TransactionType.EXPENSE));
+		model.addAttribute("profitAmount", Transaction.getTotalAmount(transactions, TransactionType.PROFIT));
+
 		
 		return "dashboard.html";
 	}

@@ -7,46 +7,55 @@
   <link rel="stylesheet" href="/css/dashboard.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/scripts.js"></script>
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="background-image" th:attr="data-user-id=${user.id}, data-from-page='/'">
+<body class="background-image" th:attr="data-user-id=${user.id}, data-from-page='/', data-modal-to-show=${modalToShow}, data-report-exists=${report != null}">
   <header>
-	<div class="left-header">
-	  <span th:text="'Benvenuto, ' + ${user.name}"></span>
-	</div>
-	
-    <div class="right-header" th:if="${userDetails}">
-      <span th:text="${userDetails.username}"></span>
-      <a href="/logout">Logout</a>
+    <div class="header-left">
+      <span class="welcome" th:text="'Benvenuto, ' + ${user.name}"></span>
+    </div>
+    
+    <div class="header-center">
+      <h1>Dashboard</h1>
+    </div>
+    
+    <div class="header-right" th:if="${userDetails}">
+      <div class="user-info">
+        <div class="user-avatar" th:text="${userDetails.username.substring(0,1).toUpperCase()}"></div>
+        <span th:text="${userDetails.username}"></span>
+      </div>
+      <a href="/logout" class="logout">Logout</a>
     </div>
   </header>
-
+ 
   <main class="dashboard-container">
-	<div th:if="${change}" class="notification success" id="notification">
-	  <span th:text="${change}"></span>
-	</div>
-    <h1>Dashboard</h1>
-
-    <div class="dashboard-layout">
-      <!-- Central Chart Circle -->
-      <div class="central-chart">
-        <div class="chart-wrapper">
-          <canvas id="transactionsChart"></canvas>
-        </div>
-      </div>
+    <div th:if="${change}" class="notification success" id="notification">
+      <span th:text="${change}"></span>
+    </div>
+	
+	<div class="dashboard-layout">
+		<div class="central-chart">
+		  <div class="chart-wrapper">
+		    <canvas id="transactionsChart"></canvas>
+		  </div>
+		</div>
 
       <!-- Metodi di Pagamento -->
       <section class="card payment-methods">
-        <h2>💳 Metodi di Pagamento</h2>
+        <h2>Metodi di Pagamento</h2>
         <ul>
           <li th:each="method : ${paymentMethods}">
-			<div style="display: flex; justify-content: space-between; align-items: center;">
-			  <span th:text="${method.name}"></span>
-			  <span th:text="${method.type.getName().substring(method.type.getName().length() - 2)}"></span>
-			</div>
-		  </li>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <span th:text="${method.name}"></span>
+              <span class="badge" th:text="${method.type.getName().substring(method.type.getName().length() - 2)}"></span>
+            </div>
+          </li>
         </ul>
-		<div class="empty" th:if="${#lists.isEmpty(paymentMethods)}">Non sono presenti metodi di pagamento</div>
-		<div class="btn-group">
+        <div class="empty" th:if="${#lists.isEmpty(paymentMethods)}">Non sono presenti metodi di pagamento</div>
+        <div class="btn-group">
           <a class="btn" href="#" onclick="openAddMethodModal()">➕ Aggiungi</a>
           <a class="btn btn-secondary" th:href="@{'/methods/manage/' + ${user.id}}">⚙️ Gestisci</a>
         </div>
@@ -54,25 +63,37 @@
 
       <!-- Transazioni Recenti -->
       <section class="card recent-transactions">
-        <h2>🕒 Transazioni Recenti</h2>
+        <h2>Transazioni Recenti</h2>
         <ul>
-          <li th:each="transaction : ${recentTransactions}" th:text="${transaction.description} + ' - ' + ${transaction.amount} + ' €' + ' (' + ${transaction.date} + ')'"></li>
+          <li th:each="transaction : ${recentTransactions}">
+            <span th:text="${transaction.description} + ' - ' + ${transaction.amount} + ' €' + ' (' + ${#temporals.format(transaction.date, 'dd/MM/yyyy')} + ')'"></span>
+          </li>
         </ul>
-		<div class="empty" th:if="${#lists.isEmpty(recentTransactions)}">Non sono presenti transazioni recenti</div>
-		<div class="btn-group">
-			<a class="btn" href="#" onclick="openAddTransactionModal()">➕ Aggiungi</a>
-			<a class="btn btn-secondary" th:href="'/transactions/manage/' + ${user.id}">📋 Vedi tutte</a>
-		</div>
+        <div class="empty" th:if="${#lists.isEmpty(recentTransactions)}">Non sono presenti transazioni recenti</div>
+        <div class="btn-group">
+          <a class="btn" href="#" onclick="openAddTransactionModal()">➕ Aggiungi</a>
+          <a class="btn btn-secondary" th:href="'/transactions/manage/' + ${user.id}">📋 Vedi tutte</a>
+        </div>
       </section>
 
       <!-- Report -->
       <section class="card reports">
-        <h2>📈 Report</h2>
-        <ul>
-          <li th:each="report : ${reports}" th:text="${report.name} + ' | ' + ${report.date}"></li>
-        </ul>
-		<div class="empty" th:if="${#lists.isEmpty(reports)}">Non sono presenti report</div>
-		<a class="btn btn-secondary" onclick="openGenerateReportModal()">📈 Genera Report</a>
+        <h2>Report</h2>
+
+        <div th:if="${report}">
+          <p><strong>Periodo:</strong> <span th:text="${#temporals.format(report.start, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(report.end, 'dd/MM/yyyy')}"></span></p>
+          <p><strong>Tipo:</strong> <span th:text="${report.type != null ? report.type.getName() : 'Incassi & Spese'}"></span></p>
+          <p><strong>Numero di transazioni:</strong> <span th:text="${report.transactionsAmount}"></span></p>
+          <p th:if="${report.type == null || report.type== T(it.uniroma3.monitoraggio.model.TransactionType).EXPENSE}"><strong>Importo Speso:</strong> <span th:text="${report.expenseAmount} + ' €'"></span></p>
+          <p th:if="${report.type == null || report.type== T(it.uniroma3.monitoraggio.model.TransactionType).PROFIT}"><strong>Importo Guadagnato:</strong> <span th:text="${report.earnedAmount} + ' €'"></span></p>
+          <p><strong>Saldo Netto:</strong> <span th:text="${report.earnedAmount - report.expenseAmount} + ' €'"></span></p>
+        </div>
+
+        <div class="empty" th:if="${report == null}">Non sono presenti report</div>
+
+        <div class="btn-group">
+          <a class="btn btn-secondary" onclick="openGenerateReportModal()">📈 Genera Report</a>
+        </div>
       </section>
     </div>
   </main>
@@ -86,83 +107,102 @@
   </div>
   
   <script>
-	// Chart.js setup
-	const ctx = document.getElementById("transactionsChart").getContext("2d");
-	const chart = new Chart(ctx, {
-	  type: "line",
-	  data: {
-	    labels: ["Gen", "Feb", "Mar", "Apr", "Mag"],
-	    datasets: [
-	      {
-	        label: "Spese mensili (€)",
-	        data: [450, 520, 380, 670, 590],
-	        backgroundColor: "rgba(56, 161, 105, 0.1)",
-	        borderColor: "#38a169",
-	        borderWidth: 3,
-	        pointBackgroundColor: "#38a169",
-	        pointBorderColor: "#ffffff",
-	        pointBorderWidth: 2,
-	        pointRadius: 6,
-	        pointHoverRadius: 8,
-	        fill: true,
-	        tension: 0.4,
-	      },
-	    ],
-	  },
-	  options: {
-	    responsive: true,
-	    maintainAspectRatio: false,
-	    plugins: {
-	      legend: {
-	        labels: {
-	          color: "#276749",
-	          font: { weight: "600", size: 14 }
-	        }
-	      },
-	      tooltip: {
-	        backgroundColor: "rgba(56, 161, 105, 0.9)",
-	        titleColor: "#ffffff",
-	        bodyColor: "#ffffff",
-	        cornerRadius: 8,
-	        displayColors: false,
-	      },
-	    },
-	    scales: {
-	      y: {
-	        beginAtZero: true,
-	        grid: {
-	          color: "rgba(56, 161, 105, 0.1)",
-	          drawBorder: false,
-	        },
-	        ticks: {
-	          color: "#276749",
-	          font: { weight: "500" },
-	          callback: function(value) {
-	            return value + "€";
-	          }
-	        },
-	      },
-	      x: {
-	        grid: {
-	          display: false,
-	        },
-	        ticks: {
-	          color: "#276749",
-	          font: { weight: "500" }
-	        },
-	      },
-	    },
-	    interaction: {
-	      intersect: false,
-	      mode: 'index',
-	    },
-	    animation: {
-	      duration: 1000,
-	      easing: 'easeOutQuart'
-	    }
-	  },
-	});
+	// Plugin per il testo centrale
+	const centerTextPlugin = {
+	  id: 'centerText',
+	  beforeDraw: function(chart) {
+	    const ctx = chart.ctx;
+	    const width = chart.width;
+	    const height = chart.height;
+	    
+	    ctx.restore();
+	    ctx.font = "600 16px Poppins";
+	    ctx.fillStyle = "#1A202C"; 
+	    ctx.textAlign = "center";
+	    ctx.textBaseline = "middle";
+	    
+	    const text = "Transazioni totali";
+	    const textX = width / 2;
+	    const textY = height / 2;
+	    
+	    ctx.fillText(text, textX, textY);
+	    ctx.save();
+	  }
+	};
+	
+    // Chart.js setup
+    const ctx = document.getElementById("transactionsChart").getContext("2d");
+    const labels = ["Spesa", "Guadagno"];
+	const data = [
+	    [[${expenseAmount}]], 
+	    [[${profitAmount}]]
+	  ];;
+
+    const backgroundColors = [
+      "rgba(47, 133, 90, 0.8)",    // Primary green
+      "rgba(37, 133, 90, 0.8)",    // Dark green
+    ];
+
+    const borderColors = [
+      "#2F855A",
+      "#68D391", 
+    ];
+
+    const chart = new Chart(ctx, {
+      type: "doughnut",
+	  plugins: [centerTextPlugin], 
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Spese totali (€)",
+          data: data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 3,
+          hoverOffset: 10,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: "#1A202C",
+              font: { 
+                family: 'Poppins',
+                weight: "500", 
+                size: 12 
+              },
+              padding: 15,
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          },
+          tooltip: {
+            backgroundColor: "rgba(47, 133, 90, 0.9)",
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            cornerRadius: 12,
+            displayColors: false,
+            titleFont: {
+              family: 'Poppins',
+              weight: '600'
+            },
+            bodyFont: {
+              family: 'Poppins',
+              weight: '500'
+            }
+          },
+        },
+        cutout: '60%',
+        animation: {
+          duration: 1000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
   </script>
 </body>
-2004-2025 © Davidor, Incorporated. All rights reserved.
 </html>

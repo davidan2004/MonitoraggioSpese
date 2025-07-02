@@ -1,57 +1,62 @@
 <div th:fragment="addTransactionForm">
- <script src="/js/scripts.js"></script>
-  <h2>Aggiungi Transazione</h2>
+  <script src="/js/scripts.js"></script>
+  <h2 th:if="${edit} == null">Aggiungi Transazione</h2>
+  <h2 th:if="${edit} != null">Modifica Transazione</h2>
   <div id="modalBody">
-	<div style="color:red" th:text="${emptyName}"></div>
-    <form th:action="@{'/transactions/add/' + ${userId} + '?fromPage=' + ${fromPage}}" method="POST">
-      
+    <form th:action="@{'/transactions/add/' + ${userId} + '?fromPage=' + ${fromPage}}" method="POST" th:object="${transaction}">
+
+      <input type="hidden" name="edit" th:value="${edit}"/>
+      <input type="hidden" th:if="*{id != null}" th:field="*{id}" />
+
       <div class="form-group">
         <label for="amount">Importo</label>
-        <input type="number" id="amount" th:field="${transaction.amount}" placeholder="es. 100" required>
+        <div th:text="${wrongAmount}" style="color: red;"></div>
+        <input type="number" id="amount" th:field="*{amount}" placeholder="es. 100" required>
       </div>
 
       <div class="form-group">
         <label for="date">Data</label>
-        <input type="date" id="date" th:field="${transaction.date}" required>
+        <div th:text="${wrongDate}" style="color: red;"></div>
+        <input type="date" id="date" th:field="*{date}" required>
       </div>
 
       <div class="form-group">
+        <div th:text="${emptyDesc}" style="color: red;"></div>
         <label for="description">Descrizione</label>
-        <input type="text" id="description" th:field="${transaction.description}" placeholder="es. Spesa supermercato" required>
+        <input type="text" id="description" th:field="*{description}" placeholder="es. Spesa supermercato" required>
       </div>
 
       <div class="form-group">
         <label for="type">Tipo</label>
-        <select autocomplete="off" id="type" th:field="${transaction.type}" onchange="filterCategories()" required>
-			 <option value="" selected>-- Seleziona tipo --</option>
-			 <option th:each="t : ${T(it.uniroma3.monitoraggio.model.TransactionType).values()}"
+        <select autocomplete="off" id="type" th:field="*{type}" onchange="filterCategories()" required>
+          <option value="" selected>-- Seleziona tipo --</option>
+          <option th:each="t : ${T(it.uniroma3.monitoraggio.model.TransactionType).values()}"
                   th:value="${t}" th:text="${t.getName()}">Tipo</option>
         </select>
       </div>
 
-	  <div class="form-group">
-	    <label for="category">Categoria</label>
+      <div class="form-group">
+        <label for="category">Categoria</label>
+        <select autocomplete="off" id="category" th:field="*{category}" required>
+          <option value="" selected>-- Seleziona categoria --</option>
+          <option th:each="cat : ${expenseCategories}"
+                  th:value="${cat}"
+                  th:text="${cat.label}"
+                  data-type="EXPENSE"></option>
 
-		<select autocomplete="off" id="category" th:field="${transaction.category}" required>
-		  <option value="" selected>-- Seleziona categoria --</option>
-		  <option th:each="cat : ${expenseCategories}" 
-		          th:value="${cat}" 
-		          th:text="${cat.label}"
-		          data-type="EXPENSE"></option>
-
-		  <option th:each="cat : ${profitCategories}" 
-		          th:value="${cat}" 
-		          th:text="${cat.label}"
-		          data-type="PROFIT"></option>
-		</select>
-	  </div>
+          <option th:each="cat : ${profitCategories}"
+                  th:value="${cat}"
+                  th:text="${cat.label}"
+                  data-type="PROFIT"></option>
+        </select>
+      </div>
 
       <div class="form-group">
         <label for="paymentMethod">Metodo di Pagamento</label>
-        <select autocomplete="off" id="paymentMethod" th:field="${transaction.paymentMethod}" required>
-		  <option value="" selected>-- Seleziona metodo di pagamento --</option>
-          <option th:each="method : ${paymentMethods}" 
-                  th:value="${method.id}" 
+        <select autocomplete="off" id="paymentMethod" th:field="*{paymentMethod}" required>
+          <option value="" selected>-- Seleziona metodo di pagamento --</option>
+          <option th:each="method : ${paymentMethods}"
+                  th:value="${method.id}"
                   th:text="${method.name}">Metodo</option>
         </select>
       </div>
@@ -63,4 +68,3 @@
     </form>
   </div>
 </div>
-

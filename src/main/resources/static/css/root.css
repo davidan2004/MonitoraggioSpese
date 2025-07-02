@@ -3,6 +3,7 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+
 body {
   margin: 0;
   padding: 0;
@@ -143,17 +144,22 @@ header a:hover {
 }
 
 /* Sfondo */
-body.background-image {
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  background-image: url('/images/green-background.gif');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+
+.background-image {
+  background: linear-gradient(135deg, 
+    #f7fafc 0%, 
+    #e2f8e7 25%, 
+    #f7fafc 50%, 
+    #e8f5e8 75%, 
+    #f7fafc 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .container.big-container {
